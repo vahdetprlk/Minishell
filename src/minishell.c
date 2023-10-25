@@ -2,5 +2,5 @@
 
 int main()
 {
-	printf("burak\n");
+	printf("burak_vahdet\n");
 }
