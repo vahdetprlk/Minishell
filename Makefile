@@ -2,9 +2,12 @@ NAME = minishell
 
 CC = cc
 
-CFLAGS = -Wall -Wextra -Werror -g 
+CFLAGS = -Wall -Wextra -Werror -g
 
-SRC = src/minishell.c
+SRC =	src/minishell.c \
+		src/ft_split.c \
+		src/ft_calloc.c
+
 
 OBJ = $(SRC:.c=.o)
 
