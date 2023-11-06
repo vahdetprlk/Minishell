@@ -2,6 +2,7 @@
 	"files.associations": {
 		"unistd.h": "c",
 		"utmp.h": "c",
-		"__mutex_base": "c"
+		"__mutex_base": "c",
+		"minishell.h": "c"
 	}
 }

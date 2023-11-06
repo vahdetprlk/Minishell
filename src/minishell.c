@@ -1,41 +1,38 @@
+#include "minishell.h"
 #include <stdio.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <string.h>
+#include <readline/readline.h>
+#include <stdlib.h>
 
-int ft_create_file(char *file) {
-    int fd;
 
-    fd = open(file, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-    return fd;
+void	ft_prompt_check(char *prompt)
+{
+	char **splitted_prompt;
+
+	splitted_prompt = ft_split(prompt, ' ');
+	int i = 0;
+	while (splitted_prompt[i])
+	{
+		printf("%s\n", splitted_prompt[i]);
+		i++;
+	}
+
 }
 
-int main() {
-    int fd[3];
+void	ft_prompt_hook(char *prompt)
+{
+	ft_prompt_check(prompt);
+	free(prompt);
+}
 
-    char *command[] = {"ls", ">", "vahdet", ">", "burak", "", "cemal", NULL};
-    int i = 0;
-    int j = 0;
+int main(void)
+{
+	char	*prompt;
 
-    while (command[i]) {
-        if (strcmp(command[i], ">") == 0) {
-            fd[j] = ft_create_file(command[i + 1]);
-            printf("fd = %d\n", fd[j]);
-            j++;
-        }
-        i++;
-    }
-
-    char str[10000];
-
-    write(fd[1], "burak", 5);
-    close(fd[1]);
-
-    fd[1] = open("burak", O_RDONLY);
-    read(fd[1], str, 5);
-    
-    write(fd[0], str, 5);
-    close(fd[0]);
-
-    return 0;
+	while (1)
+	{
+		prompt = readline("minishell$ ");
+		if (!prompt)
+			break;
+		ft_prompt_hook(prompt);
+	}
 }
