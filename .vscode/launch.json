@@ -1,21 +1,26 @@
 {
-	// Use IntelliSense to learn about possible attributes.
-	// Hover to view descriptions of existing attributes.
-	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-	"version": "0.2.0",
-	"configurations": [
-		{
-			"name": "(lldb) Başlat",
-			"type": "cppdbg",
-			"request": "launch",
-			"program": "${workspaceFolder}/minishell",
-			"args": [],
-			"stopAtEntry": false,
-			"cwd": "${workspaceFolder}",
-			"environment": [],
-			"externalConsole": false,
-			"preLaunchTask": "make minishell",
-			"MIMode": "lldb"
-		}
-	]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "(lldb) Başlat",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/minishell",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "preLaunchTask": "make minishell",
+      "MIMode": "lldb"
+    },
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "/Users/buryilma/Desktop/Minishell/src",
+      "program": "/Users/buryilma/Desktop/Minishell/src/build/Debug/outDebug"
+    }
+  ]
 }
