@@ -1,96 +1,137 @@
+
 #include "minishell.h"
 #include <stdio.h>
 #include <readline/readline.h>
 #include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
 
-int ft_word_counter(char* prompt)
+void	*ft_realloc(void *ptr, size_t size)
 {
-	int i = 0;
-	int count = 0;
-	int length = strlen(prompt);
-	int in_quotes = 0;
+	void	*new_ptr;
 
-	while(i < length) {
-		if(prompt[i] == '\"' || prompt[i] == '\'') {
-			in_quotes = !in_quotes;
-		}
-		if((prompt[i] == ' ' && !in_quotes && prompt[i+1] != ' ' && prompt[i+1] != '\0') || 
-		   (prompt[i] == '\"' || prompt[i] == '\'')) {
-			count++;
-		}
-		if((prompt[i] == '|' || prompt[i] == '<' || prompt[i] == '>') && !in_quotes) {
-			count++;
-		}
+	new_ptr = ft_calloc(size, sizeof(char));
+	if (!new_ptr)
+	{
+		free(ptr);
+		return (NULL);
+	}
+	ft_strlcpy(new_ptr, ptr, size);
+	free(ptr);
+	return (new_ptr);
+}
+
+void ft_free_tab(char **tab)
+{
+	int	i;
+
+	i = 0;
+	while (tab[i])
+	{
+		free(tab[i]);
 		i++;
 	}
+}
 
-	if(prompt[length - 1] != ' ' && !(prompt[length - 1] == '|' && (prompt[length - 2] == ' ' || length == 1))) {
-		count++;
+int	ft_single_quote(char *prompt)
+{
+	int	len;
+
+	len = 1;
+	while (prompt[len])
+	{
+		if (prompt[len] == '\'')
+			break;
+		len++;
 	}
-
-	return count;
+	if (prompt[len] == '\'')
+		len++;
+	return (len);
 }
 
-char** split_prompt(char* prompt) {
-    int length = strlen(prompt);
-    char** words = malloc((length + 1) * sizeof(char*));
-    for(int i = 0; i <= length; i++) {
-        words[i] = malloc((length + 1) * sizeof(char));
-    }
+int	ft_double_quote(char *prompt)
+{
+	int	len;
 
-    int i = 0, j = 0, k = 0;
-    int in_quotes = 0;
-    while(prompt[i]) {
-        if(prompt[i] == '\"' || prompt[i] == '\'') {
-            words[j][k] = prompt[i];
-            k++;
-            if(in_quotes && k != 0) {
-                words[j][k] = '\0';
-                j++;
-                k = 0;
-            }
-            in_quotes = !in_quotes;
-        } else if((prompt[i] == '|' || prompt[i] == '<' || prompt[i] == '>') && !in_quotes) {
-            if(k != 0) {
-                words[j][k] = '\0';
-                j++;
-                k = 0;
-            }
-            words[j][0] = prompt[i];
-            words[j][1] = '\0';
-            j++;
-        } else if((prompt[i] != ' ' || in_quotes) && prompt[i] != '\0') {
-            words[j][k] = prompt[i];
-            k++;
-        } else if(prompt[i] == ' ' && !in_quotes) {
-            if(k != 0) {
-                words[j][k] = '\0';
-                j++;
-                k = 0;
-            }
-        }
-        i++;
-    }
-    if(k != 0) {
-        words[j][k] = '\0';
-        j++;
-    }
-    words[j] = NULL;
-
-    return words;
+	len = 1;
+	while (prompt[len])
+	{
+		if (prompt[len] == '\"')
+			break;
+		len++;
+	}
+	if (prompt[len] == '\"')
+		len++;
+	return (len);
 }
+
+int	ft_lex_quote(char *prompt, char **cmd)
+{
+	int		len;
+
+	len = 0;
+	if (prompt[len] == '\'')
+		len = ft_single_quote(prompt);
+	else
+		len = ft_double_quote(prompt);
+	*cmd = ft_substr(prompt, 0, len + 1);
+	if (!cmd)
+		return (0);
+	return (len);
+}
+
+
+char	**ft_lex(char *prompt)
+{
+	int		i;
+	int		j;
+	int		len;
+	char	**cmd;
+
+	cmd = (char **)ft_calloc(2, sizeof(char *));
+	if (!cmd)
+		return (NULL);
+	len = 0;
+	j = 0;
+	i = 0;
+	while (prompt[i])
+	{
+		if (prompt[i] == '\'' || prompt[i] == '\"')
+		{
+			i += ft_lex_quote(prompt + i, cmd + j);
+			if (i > 0)
+				cmd = (char **)ft_realloc(cmd, sizeof(char *) * (j + 2));
+				if (!cmd)
+					return (NULL);
+			j++;
+		}
+		else
+		{
+			while (prompt[i + len] && prompt[i + len] != '\'' && prompt[i + len] != '\"')
+				len++;
+			cmd[j] = ft_substr(prompt, i, len);
+			if (!cmd[j])
+			{
+				ft_free_tab(cmd);
+				return (NULL);
+			}
+			i += len;
+		}
+	}
+	return (cmd);
+}
+
+
 
 void	ft_prompt_hook(char *prompt)
 {
-	ft_word_counter(prompt);
-	printf("word count: %d\n", ft_word_counter(prompt));
-	char** words = split_prompt(prompt);
-	for(int i = 0; words[i]; i++) {
-		printf("cmd[%d] %s\n",i, words[i]);
-	}
-	free(prompt);
+	char	**cmd;
+	//char	**cmd_list;
+
+	cmd = ft_lex(prompt);
+	free (prompt);
+	printf("%s\n", cmd[0]);
+	printf("%s\n", cmd[1]);
+	printf("%s\n", cmd[2]);
+	//cmd_list = ft_tokenizer(cmd);
 }
 
 int main(void)

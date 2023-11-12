@@ -3,7 +3,13 @@
     "unistd.h": "c",
     "utmp.h": "c",
     "__mutex_base": "c",
-    "minishell.h": "c"
+    "minishell.h": "c",
+    "__bit_reference": "c",
+    "algorithm": "c",
+    "bitset": "c",
+    "chrono": "c",
+    "unordered_map": "c",
+    "sstream": "c"
   },
   "C_Cpp_Runner.cCompilerPath": "clang",
   "C_Cpp_Runner.cppCompilerPath": "clang++",
