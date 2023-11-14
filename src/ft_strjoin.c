@@ -1,4 +1,5 @@
 #include "minishell.h"
+#include <stdlib.h>
 
 char	*ft_strjoin(char const *s1, char const *s2)
 {
@@ -10,6 +11,7 @@ char	*ft_strjoin(char const *s1, char const *s2)
 	if (dst == NULL)
 		return (NULL);
 	ft_strlcpy(dst, s1, dstsize);
+	free((char *)s1);
 	ft_strlcat(dst, s2, dstsize);
 	return (dst);
 }

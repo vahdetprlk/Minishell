@@ -1,4 +1,5 @@
 #include "minishell.h"
+#include <stdlib.h>
 
 size_t	ft_strlen(const char *s)
 {
@@ -58,47 +59,168 @@ char	*ft_substr(char const *s, unsigned int start, size_t len)
 	return (dst);
 }
 
-static size_t	word_counter(char const *s, char c)
+static int	ft_word_counter(char const *s)
 {
-	size_t	word_counter;
+	int	i;
+	int	count;
 
-	word_counter = 0;
-	while (*s)
+	i = 0;
+	count = 0;
+	if (s[i] == '\0')
+		return (0);
+	while (s[i] != '\0')
 	{
-		if (*s == c)
-			s++;
+		if (s[i] == '\'')
+		{
+			i++;
+			count++;
+			while (s[i] && s[i] != '\'')
+				i++;
+			if (s[i] == '\'')
+				i++;
+		}
+		else if (s[i] == '\"')
+		{
+			i++;
+			count++;
+			while (s[i] && s[i] != '\"')
+				i++;
+			if (s[i] == '\"')
+				i++;
+		}
+		else if (!ft_strncmp(&s[i], "<<", 2) || !ft_strncmp(&s[i], ">>", 2)
+				|| !ft_strncmp(&s[i], "||", 2) || !ft_strncmp(&s[i], "&&", 2))
+		{
+			count++;
+			i += 2;
+		}
+		else if (s[i] == '>' || s[i] == '<' || s[i] == '|')
+		{
+			count++;
+			i++;
+		}
+		else if (s[i] == ' ')
+			i++;
 		else
 		{
-			word_counter++;
-			while (*s && *s != c)
-				s++;
+			count++;
+			while (s[i] && s[i] != ' ' && s[i] != '\'' && s[i] != '\"')
+				i++;
 		}
 	}
-	return (word_counter);
+	return (count);
 }
 
-char	**ft_split(char const *s, char c)
+static int	ft_wordlen(char const *s, char c)
 {
-	char	**dst;
-	size_t	word_size;
-	size_t	letter_counter;
+	int	i;
+	int	len;
 
-	word_size = word_counter(s, c);
-	dst = (char **)ft_calloc((word_size + 1), sizeof(char *));
-	if (!dst)
-		return (NULL);
-	while (*s)
+	i = 0;
+	len = 0;
+	if (s[i] == '\0')
+		return (0);
+	if (c == '\'')
 	{
-		if (*s == c)
-			s++;
+		while (s[i] != c &&  s[i] != '\0')
+		{
+			len++;
+			i++;
+		}
+		return (len);
+	}
+	else if (c == '\"')
+	{
+		while (s[i] != c &&  s[i] != '\0')
+		{
+			len++;
+			i++;
+		}
+		return (len);
+	}
+	else
+		while (ft_strncmp(&s[i], "<<", 2) && ft_strncmp(&s[i], ">>", 2)
+			&& ft_strncmp(&s[i], "||", 2) && ft_strncmp(&s[i], "&&", 2)
+			&& s[i] != ' ' && s[i] != '\'' && s[i] != '\"' && s[i] != '>'
+			&& s[i] != '<' && s[i] != '|' && s[i] != '\0')
+		{
+			len++;
+			i++;
+		}
+	return (len);
+}
+
+static char	**ft_free(char **str, int i)
+{
+	while (i >= 0)
+	{
+		free(str[i]);
+		i--;
+	}
+	free(str);
+	return (NULL);
+}
+
+char	**ft_split(char const *s)
+{
+	char	**str;
+	int		i;
+	int		j;
+
+	i = 0;
+	j = 0;
+	if (!s)
+		return (NULL);
+	str = (char **)ft_calloc((ft_word_counter(s) + 1), sizeof(char *));
+	if (!str)
+		return (NULL);
+	while (i < ft_word_counter(s))
+	{
+		while (s[j] == ' ')
+			j++;
+		if (!ft_strncmp(&s[j], "<<", 2) || !ft_strncmp(&s[j], ">>", 2) || !ft_strncmp(&s[j], "||", 2) || !ft_strncmp(&s[j], "&&", 2))
+		{
+			str[i] = ft_substr(s, j, 2);
+			if (!str[i])
+				return (ft_free(str, i));
+			j = j + 2;
+		}
+		else if (s[j] == '>' || s[j] == '<' || s[j] == '|')
+		{
+			j++;
+			str[i] = ft_substr(s, j - 1, 1);
+			if (!str[i])
+				return (ft_free(str, i));
+		}
+		else if (s[j] == '\'')
+		{
+			j++;
+			str[i] = ft_substr(s, j - 1, ft_wordlen(&s[j], '\'') + 2);
+			if (!str[i])
+				return (ft_free(str, i));
+			j = j + ft_wordlen(&s[j], '\'');
+			if (s[j] == '\'')
+				j++;
+		}
+		else if (s[j] == '\"')
+		{
+			j++;
+			str[i] = ft_substr(s, j - 1, ft_wordlen(&s[j], '\"') + 2);
+			if (!str[i])
+				return (ft_free(str, i));
+			j = j + ft_wordlen(&s[j], '\"');
+			if (s[j] == '\"')
+				j++;
+		}
 		else
 		{
-			letter_counter = 0;
-			while (*s && *s != c && ++letter_counter)
-				s++;
-			*dst++ = ft_substr(s - letter_counter, 0, letter_counter);
+			str[i] = ft_substr(s, j, ft_wordlen(&s[j], ' '));
+			if (!str[i])
+				return (ft_free(str, i));
+			j = j + ft_wordlen(&s[j], ' ');
 		}
+		i++;
 	}
-	*dst = 0;
-	return (dst - word_size);
+	str[i] = NULL;
+	return (str);
 }
