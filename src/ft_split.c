@@ -49,9 +49,9 @@ static char	*ft_substr(char const *s, unsigned int start, size_t len)
 		if ((len_str - start) < len)
 			len = len_str - start;
 		if (len_str >= len)
-			dst = (char *)ft_calloc(len + 1 ,sizeof(char));
+			dst = (char *)ft_calloc(len + 1, sizeof(char));
 		else
-			dst = (char *)ft_calloc(len_str + 1 ,sizeof(char));
+			dst = (char *)ft_calloc(len_str + 1, sizeof(char));
 		if (dst == NULL)
 			return (NULL);
 		ft_strlcpy(dst, s + start, len + 1);
@@ -70,26 +70,8 @@ static int	ft_word_counter(char const *s)
 		return (0);
 	while (s[i] != '\0')
 	{
-		if (s[i] == '\'')
-		{
-			i++;
-			count++;
-			while (s[i] && s[i] != '\'')
-				i++;
-			if (s[i] == '\'')
-				i++;
-		}
-		else if (s[i] == '\"')
-		{
-			i++;
-			count++;
-			while (s[i] && s[i] != '\"')
-				i++;
-			if (s[i] == '\"')
-				i++;
-		}
-		else if (!ft_strncmp(&s[i], "<<", 2) || !ft_strncmp(&s[i], ">>", 2)
-				|| !ft_strncmp(&s[i], "||", 2) || !ft_strncmp(&s[i], "&&", 2))
+		if (!ft_strncmp(&s[i], "<<", 2) || !ft_strncmp(&s[i], ">>", 2)
+			|| !ft_strncmp(&s[i], "||", 2) || !ft_strncmp(&s[i], "&&", 2))
 		{
 			count++;
 			i += 2;
@@ -99,54 +81,69 @@ static int	ft_word_counter(char const *s)
 			count++;
 			i++;
 		}
-		else if (s[i] == ' ')
-			i++;
 		else
 		{
 			count++;
-			while (s[i] && s[i] != ' ' && s[i] != '\'' && s[i] != '\"')
-				i++;
+			while (s[i] && s[i] != '>'
+				&& s[i] != '<' && s[i] != '|')
+			{
+				if (s[i] == '\'')
+				{
+					i++;
+					while (s[i] && s[i] != '\'')
+						i++;
+					if (s[i] == '\'')
+						i++;
+				}
+				else if (s[i] == '\"')
+				{
+					i++;
+					while (s[i] && s[i] != '\"')
+						i++;
+					if (s[i] == '\"')
+						i++;
+				}
+				else
+					i++;
+			}
 		}
 	}
 	return (count);
 }
 
-static int	ft_wordlen(char const *s, char c)
+static int	ft_wordlen(char const *s)
 {
 	int	i;
 	int	len;
+	int	in_quote_d;
+	int	in_quote_s;
 
 	i = 0;
+	in_quote_d = 0;
+	in_quote_s = 0;
 	len = 0;
-	if (s[i] == '\0')
-		return (0);
-	if (c == '\'')
+	while (s[i] != '\0')
 	{
-		while (s[i] != c &&  s[i] != '\0')
+		if (s[i] == '\'' || s[i] == '\"')
+		{
+			if (s[i] == '\'')
+				in_quote_s = !in_quote_s;
+			else
+				in_quote_d = !in_quote_d;
+			len++;
+			i++;
+		}
+		else if (in_quote_d == 0 && in_quote_s == 0
+			&& (!ft_strncmp(&s[i], "<<", 2) || !ft_strncmp(&s[i], ">>", 2)
+				|| !ft_strncmp(&s[i], "||", 2) || !ft_strncmp(&s[i], "&&", 2)
+				|| s[i] == '>' || s[i] == '<' || s[i] == '|'))
+			break ;
+		else
 		{
 			len++;
 			i++;
 		}
-		return (len);
 	}
-	else if (c == '\"')
-	{
-		while (s[i] != c &&  s[i] != '\0')
-		{
-			len++;
-			i++;
-		}
-		return (len);
-	}
-	else
-		while (ft_strncmp(&s[i], "<<", 2) && ft_strncmp(&s[i], ">>", 2)
-			&& ft_strncmp(&s[i], "||", 2) && ft_strncmp(&s[i], "&&", 2)
-			&& s[i] != ' ' && s[i] != '\'' && s[i] != '\"' && s[i] != '>'
-			&& s[i] != '<' && s[i] != '|' && s[i] != '\0')
-		{
-			len++;
-			i++;
-		}
 	return (len);
 }
 
@@ -176,9 +173,8 @@ char	**ft_split(char const *s)
 		return (NULL);
 	while (i < ft_word_counter(s))
 	{
-		while (s[j] == ' ')
-			j++;
-		if (!ft_strncmp(&s[j], "<<", 2) || !ft_strncmp(&s[j], ">>", 2) || !ft_strncmp(&s[j], "||", 2) || !ft_strncmp(&s[j], "&&", 2))
+		if (!ft_strncmp(&s[j], "<<", 2) || !ft_strncmp(&s[j], ">>", 2)
+			|| !ft_strncmp(&s[j], "||", 2) || !ft_strncmp(&s[j], "&&", 2))
 		{
 			str[i] = ft_substr(s, j, 2);
 			if (!str[i])
@@ -187,37 +183,17 @@ char	**ft_split(char const *s)
 		}
 		else if (s[j] == '>' || s[j] == '<' || s[j] == '|')
 		{
-			j++;
-			str[i] = ft_substr(s, j - 1, 1);
+			str[i] = ft_substr(s, j, 1);
 			if (!str[i])
 				return (ft_free(str, i));
-		}
-		else if (s[j] == '\'')
-		{
 			j++;
-			str[i] = ft_substr(s, j - 1, ft_wordlen(&s[j], '\'') + 2);
-			if (!str[i])
-				return (ft_free(str, i));
-			j = j + ft_wordlen(&s[j], '\'');
-			if (s[j] == '\'')
-				j++;
-		}
-		else if (s[j] == '\"')
-		{
-			j++;
-			str[i] = ft_substr(s, j - 1, ft_wordlen(&s[j], '\"') + 2);
-			if (!str[i])
-				return (ft_free(str, i));
-			j = j + ft_wordlen(&s[j], '\"');
-			if (s[j] == '\"')
-				j++;
 		}
 		else
 		{
-			str[i] = ft_substr(s, j, ft_wordlen(&s[j], ' '));
+			str[i] = ft_substr(s, j, ft_wordlen(&s[j]));
 			if (!str[i])
 				return (ft_free(str, i));
-			j = j + ft_wordlen(&s[j], ' ');
+			j = j + ft_wordlen(&s[j]);
 		}
 		i++;
 	}

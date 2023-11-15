@@ -4,39 +4,65 @@
 #include <readline/readline.h>
 #include <stdlib.h>
 
+void	ft_free_list(char **list)
+{
+	int	i;
+
+	i = 0;
+	while (list[i])
+	{
+		free(list[i]);
+		i++;
+	}
+	free(list);
+}
+
 char	**ft_lex(char *prompt)
 {
 	char	**cmd;
 
-	cmd = ft_split(prompt); // leaks kontrolu yapilacak (ft_split.c)
-	int i = 0;
-	while (cmd[i])
+	cmd = ft_split(prompt);
+	if (!cmd)
 	{
-		printf("%s\n", cmd[i]);
-		i++;
+		perror("Malloc failed");
+		return (NULL);
 	}
 	return (cmd);
 }
 
-void	ft_prompt_hook(char *prompt)
+char	**ft_prompt_hook(char *prompt)
 {
 	char	**cmd;
-    (void)cmd;
-	//char	**cmd_list;
 
 	cmd = ft_lex(prompt);
-	//cmd_list = ft_tokenizer(cmd);
+	if (!cmd)
+		return (NULL);
+	return (cmd);
 }
 
-int main(void)
+int	main(void)
 {
 	char	*prompt;
+	char	**cmd_list;
 
 	while (1)
 	{
 		prompt = readline("minishell$ ");
 		if (!prompt)
-			break;
-		ft_prompt_hook(prompt);
+			break ;
+		cmd_list = ft_prompt_hook(prompt);
+		if (!cmd_list)
+		{
+			free (prompt);
+			break ;
+		}
+		int i = 0;
+		while (cmd_list[i])
+		{
+			printf("%s\n", cmd_list[i]);
+			i++;
+		}
+		free(prompt);
+		ft_free_list(cmd_list);
 	}
 }
