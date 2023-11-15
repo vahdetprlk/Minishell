@@ -8,7 +8,7 @@ char	**ft_lex(char *prompt)
 {
 	char	**cmd;
 
-	cmd = ft_split(prompt); // leaks kontrolu yapilacak (ft_split.c) 
+	cmd = ft_split(prompt); // leaks kontrolu yapilacak (ft_split.c)
 	int i = 0;
 	while (cmd[i])
 	{
@@ -21,6 +21,7 @@ char	**ft_lex(char *prompt)
 void	ft_prompt_hook(char *prompt)
 {
 	char	**cmd;
+    (void)cmd;
 	//char	**cmd_list;
 
 	cmd = ft_lex(prompt);
