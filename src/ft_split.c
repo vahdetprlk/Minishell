@@ -81,10 +81,13 @@ static int	ft_word_counter(char const *s)
 			count++;
 			i++;
 		}
+		else if (s[i] == ' ')
+			while (s[i] && s[i] == ' ')
+				i++;
 		else
 		{
 			count++;
-			while (s[i] && s[i] != '>'
+			while (s[i] && s[i] != ' ' && s[i] != '>'
 				&& s[i] != '<' && s[i] != '|')
 			{
 				if (s[i] == '\'')
@@ -136,7 +139,7 @@ static int	ft_wordlen(char const *s)
 		else if (in_quote_d == 0 && in_quote_s == 0
 			&& (!ft_strncmp(&s[i], "<<", 2) || !ft_strncmp(&s[i], ">>", 2)
 				|| !ft_strncmp(&s[i], "||", 2) || !ft_strncmp(&s[i], "&&", 2)
-				|| s[i] == '>' || s[i] == '<' || s[i] == '|'))
+				|| s[i] == ' ' || s[i] == '>' || s[i] == '<' || s[i] == '|'))
 			break ;
 		else
 		{
@@ -187,6 +190,12 @@ char	**ft_split(char const *s)
 			if (!str[i])
 				return (ft_free(str, i));
 			j++;
+		}
+		else if (s[j] == ' ')
+		{
+			while (s[j] && s[j] == ' ')
+				j++;
+			continue ;
 		}
 		else
 		{
