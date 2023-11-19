@@ -1,6 +1,8 @@
 #include "minishell.h"
 #include <stdlib.h>
 
+
+// tum whitespacee lari sil
 static size_t	ft_strlen(const char *s)
 {
 	size_t	i;
@@ -76,7 +78,8 @@ static int	ft_word_counter(char const *s)
 			count++;
 			i += 2;
 		}
-		else if (s[i] == '>' || s[i] == '<' || s[i] == '|')
+		else if (s[i] == '>' || s[i] == '<'
+			|| s[i] == '|' || s[i] == '(' || s[i] == ')')
 		{
 			count++;
 			i++;
@@ -88,7 +91,7 @@ static int	ft_word_counter(char const *s)
 		{
 			count++;
 			while (s[i] && s[i] != ' ' && s[i] != '>'
-				&& s[i] != '<' && s[i] != '|')
+				&& s[i] != '<' && s[i] != '|' && s[i] != '(' && s[i] != ')')
 			{
 				if (s[i] == '\'')
 				{
@@ -139,7 +142,8 @@ static int	ft_wordlen(char const *s)
 		else if (in_quote_d == 0 && in_quote_s == 0
 			&& (!ft_strncmp(&s[i], "<<", 2) || !ft_strncmp(&s[i], ">>", 2)
 				|| !ft_strncmp(&s[i], "||", 2) || !ft_strncmp(&s[i], "&&", 2)
-				|| s[i] == ' ' || s[i] == '>' || s[i] == '<' || s[i] == '|'))
+				|| s[i] == ' ' || s[i] == '>' || s[i] == '<' || s[i] == '|'
+				|| s[i] == '(' || s[i] == ')'))
 			break ;
 		else
 		{
@@ -184,7 +188,8 @@ char	**ft_tokenization(char const *s)
 				return (ft_free(str, i));
 			j = j + 2;
 		}
-		else if (s[j] == '>' || s[j] == '<' || s[j] == '|')
+		else if (s[j] == '>' || s[j] == '<' || s[j] == '|' || s[j] == '('
+			|| s[j] == ')')
 		{
 			str[i] = ft_substr(s, j, 1);
 			if (!str[i])
