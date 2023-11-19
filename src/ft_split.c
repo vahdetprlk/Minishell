@@ -161,7 +161,7 @@ static char	**ft_free(char **str, int i)
 	return (NULL);
 }
 
-char	**ft_split(char const *s)
+char	**ft_tokenization(char const *s)
 {
 	char	**str;
 	int		i;

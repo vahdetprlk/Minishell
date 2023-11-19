@@ -17,52 +17,80 @@ void	ft_free_list(char **list)
 	free(list);
 }
 
-char	**ft_lex(char *prompt)
-{
-	char	**cmd;
+typedef enum e_TokenType {
+	HEREDOC,
+	APPEND,
+	OR,
+	AND,
+	PIPE,
+	INPUT_REDIRECT,  // '<' için
+	OUTPUT_REDIRECT, // '>' için
+	COMMAND
+} TokenType;
 
-	cmd = ft_split(prompt);
-	if (!cmd)
+typedef struct s_Token {
+	char *value;
+	TokenType type;
+} Token;
+
+void ft_token_classification(char **token_list, Token **token_struct_list)
+{
+	int i = 0;
+	while (token_list[i])
 	{
-		perror("Malloc failed");
-		return (NULL);
+		Token *new_token = malloc(sizeof(Token));
+		new_token->value = token_list[i];
+		if (ft_strncmp(token_list[i], "<<", 2) == 0)
+			new_token->type = HEREDOC;
+		else if (ft_strncmp(token_list[i], ">>", 2) == 0)
+			new_token->type = APPEND;
+		else if (ft_strncmp(token_list[i], "||", 2) == 0)
+			new_token->type = OR;
+		else if (ft_strncmp(token_list[i], "&&", 2) == 0)
+			new_token->type = AND;
+		else if (token_list[i][0] == '|')
+			new_token->type = PIPE;
+		else if (token_list[i][0] == '>')
+			new_token->type = OUTPUT_REDIRECT;
+		else if (token_list[i][0] == '<')
+			new_token->type = INPUT_REDIRECT;
+		else
+			new_token->type = COMMAND;
+		token_struct_list[i] = new_token;
+		i++;
 	}
-	return (cmd);
 }
 
-char	**ft_prompt_hook(char *prompt)
+void	ft_prompt_hook(char *prompt)
 {
-	char	**cmd;
+	char	**token_list;
 
-	cmd = ft_lex(prompt);
-	if (!cmd)
-		return (NULL);
-	return (cmd);
+	token_list = ft_tokenization(prompt);
+	if (!token_list)
+	{
+		perror("Malloc failed");
+		ft_free_list(token_list);
+	}
+	ft_token_classification(token_list);
+	int i = 0;
+	while (token_list[i])
+	{
+		printf("%s\n", token_list[i]);
+		i++;
+	}
+	ft_free_list(token_list);
 }
 
 int	main(void)
 {
 	char	*prompt;
-	char	**cmd_list;
 
 	while (1)
 	{
 		prompt = readline("minishell$ ");
 		if (!prompt)
 			break ;
-		cmd_list = ft_prompt_hook(prompt);
-		if (!cmd_list)
-		{
-			free (prompt);
-			break ;
-		}
-		int i = 0;
-		while (cmd_list[i])
-		{
-			printf("%s\n", cmd_list[i]);
-			i++;
-		}
+		ft_prompt_hook(prompt);
 		free(prompt);
-		ft_free_list(cmd_list);
 	}
 }
