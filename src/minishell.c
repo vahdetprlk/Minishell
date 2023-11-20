@@ -1,7 +1,9 @@
 
 #include "minishell.h"
 #include <stdio.h>
+#include <unistd.h>
 #include <readline/readline.h>
+#include <readline/history.h>
 #include <stdlib.h>
 
 int	ft_listlen(char **list)
@@ -90,13 +92,28 @@ int	ft_token_classification(char **token_list, t_token **token_struct_list)
 
 void	ft_token_validation(t_token **token_struct_list)
 {
-/* 	int i = 0;
+	int	i;
+
+	i = 0;
 	while (token_struct_list[i])
 	{
-		printf("%d :: ", token_struct_list[i]->type);
-		printf("%s\n", token_struct_list[i]->value);
+		if (token_struct_list[i]->type != COMMAND)
+		{
+			if (!token_struct_list[i + 1])
+			{
+				ft_putstr_fd("minishell: syntax error near unexpected token `newline'\n", STDERR_FILENO);
+				return ;
+			}
+			if (token_struct_list[i + 1]->type != COMMAND)
+			{
+				ft_putstr_fd("minishell: syntax error near unexpected token `", STDERR_FILENO);
+				ft_putstr_fd(token_struct_list[i + 1]->value, STDERR_FILENO);
+				ft_putstr_fd("'\n", STDERR_FILENO);
+				return ;
+			}
+		}
 		i++;
-	} */
+	}
 }
 
 void	ft_prompt_hook(char *prompt)
@@ -137,6 +154,8 @@ int	main(void)
 		prompt = readline("minishell$ ");
 		if (!prompt)
 			break ;
+		add_history(prompt);
 		ft_prompt_hook(prompt);
 	}
+	rl_clear_history();
 }
