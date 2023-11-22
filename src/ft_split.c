@@ -3,7 +3,7 @@
 
 
 // tum whitespacee lari sil
-static size_t	ft_strlen(const char *s)
+size_t	ft_strlen(const char *s)
 {
 	size_t	i;
 
@@ -13,7 +13,7 @@ static size_t	ft_strlen(const char *s)
 	return (i);
 }
 
-static size_t	ft_strlcpy(char *dst, const char *src, size_t dstsize)
+size_t	ft_strlcpy(char *dst, const char *src, size_t dstsize)
 {
 	size_t	i;
 	size_t	k;

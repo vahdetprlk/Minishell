@@ -29,23 +29,21 @@ void	ft_free_list(char **list)
 	free(list);
 }
 
-typedef enum e_token_type {
-	COMMAND,
-	HEREDOC,
-	APPEND,
-	OR,
-	AND,
-	PIPE,
-	INPUT_REDIRECT,
-	OUTPUT_REDIRECT,
-	LPHARANTHESIS,
-	RPHARANTHESIS
-}	t_token_type;
+void	ft_free_struct_list(t_token **token)
+{
+	int	i;
 
-typedef struct s_Token {
-	char			*value;
-	t_token_type	type;
-}	t_token;
+	i = 0;
+	while (token[i])
+	{
+		free(token[i]->value);
+		free(token[i]);
+		i++;
+	}
+	free(token);
+}
+
+
 
 int	ft_token_classification(char **token_list, t_token **token_struct_list)
 {
@@ -60,10 +58,18 @@ int	ft_token_classification(char **token_list, t_token **token_struct_list)
 		{
 			perror("Malloc failed");
 			ft_free_list(token_list);
-			ft_free_list((char **)token_struct_list);
-			return (0);
+			ft_free_struct_list(token_struct_list);
+			return (1);
 		}
-		new_token->value = token_list[i];
+		new_token->value = ft_strdup(token_list[i]);
+		if (!new_token->value)
+		{
+			perror("Malloc failed");
+			ft_free_list(token_list);
+			ft_free_struct_list(token_struct_list);
+			return (1);
+		}
+
 		if (ft_strncmp(token_list[i], "<<", 2) == 0)
 			new_token->type = HEREDOC;
 		else if (ft_strncmp(token_list[i], ">>", 2) == 0)
@@ -87,10 +93,10 @@ int	ft_token_classification(char **token_list, t_token **token_struct_list)
 		token_struct_list[i] = new_token;
 		i++;
 	}
-	return (1);
+	return (0);
 }
 
-void	ft_token_validation(t_token **token_struct_list)
+int	ft_token_validation(t_token **token_struct_list)// hatali calisiyor
 {
 	int	i;
 
@@ -102,21 +108,23 @@ void	ft_token_validation(t_token **token_struct_list)
 			if (!token_struct_list[i + 1])
 			{
 				ft_putstr_fd("minishell: syntax error near unexpected token `newline'\n", STDERR_FILENO);
-				return ;
+				return (2);
 			}
 			if (token_struct_list[i + 1]->type != COMMAND)
 			{
 				ft_putstr_fd("minishell: syntax error near unexpected token `", STDERR_FILENO);
 				ft_putstr_fd(token_struct_list[i + 1]->value, STDERR_FILENO);
 				ft_putstr_fd("'\n", STDERR_FILENO);
-				return ;
+				return (2);
 			}
 		}
 		i++;
 	}
+	return (0);
 }
 
-void	ft_prompt_hook(char *prompt)
+
+int	ft_prompt_hook(char *prompt)
 {
 	t_token	**token_struct_list;
 	char	**token_list;
@@ -127,7 +135,7 @@ void	ft_prompt_hook(char *prompt)
 	{
 		perror("Malloc failed");
 		free(prompt);
-		return ;
+		return (1);
 	}
 	free(prompt);
 	lst_len = ft_listlen(token_list);
@@ -136,26 +144,33 @@ void	ft_prompt_hook(char *prompt)
 	{
 		perror("Malloc failed");
 		ft_free_list(token_list);
-		return ;
+		return (1);
 	}
-	if (!ft_token_classification(token_list, token_struct_list))
-		return ;
-	ft_token_validation(token_struct_list);
-	ft_free_list((char **)token_struct_list);
+	if (ft_token_classification(token_list, token_struct_list))
+		return (1);
 	ft_free_list(token_list);
+	if (ft_token_validation(token_struct_list))
+	{
+		ft_free_struct_list(token_struct_list);
+		return (2);
+	}
+	ft_free_struct_list(token_struct_list);
+	return (0);
 }
 
 int	main(void)
 {
+	int		status;
 	char	*prompt;
 
+	status = 0;
 	while (1)
 	{
 		prompt = readline("minishell$ ");
 		if (!prompt)
 			break ;
 		add_history(prompt);
-		ft_prompt_hook(prompt);
+		status = ft_prompt_hook(prompt);
+		printf ("%d\n", status);
 	}
-	rl_clear_history();
 }
