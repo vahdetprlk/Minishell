@@ -72,14 +72,13 @@ static int	ft_word_counter(char const *s)
 		return (0);
 	while (s[i] != '\0')
 	{
-		if (!ft_strncmp(&s[i], "<<", 2) || !ft_strncmp(&s[i], ">>", 2)
-			|| !ft_strncmp(&s[i], "||", 2) || !ft_strncmp(&s[i], "&&", 2))
+		if (!ft_strncmp(&s[i], "<<", 2) || !ft_strncmp(&s[i], ">>", 2))
 		{
 			count++;
 			i += 2;
 		}
 		else if (s[i] == '>' || s[i] == '<'
-			|| s[i] == '|' || s[i] == '(' || s[i] == ')')
+			|| s[i] == '|')
 		{
 			count++;
 			i++;
@@ -91,7 +90,7 @@ static int	ft_word_counter(char const *s)
 		{
 			count++;
 			while (s[i] && s[i] != ' ' && s[i] != '>'
-				&& s[i] != '<' && s[i] != '|' && s[i] != '(' && s[i] != ')')
+				&& s[i] != '<' && s[i] != '|')
 			{
 				if (s[i] == '\'')
 				{
@@ -141,9 +140,7 @@ static int	ft_wordlen(char const *s)
 		}
 		else if (in_quote_d == 0 && in_quote_s == 0
 			&& (!ft_strncmp(&s[i], "<<", 2) || !ft_strncmp(&s[i], ">>", 2)
-				|| !ft_strncmp(&s[i], "||", 2) || !ft_strncmp(&s[i], "&&", 2)
-				|| s[i] == ' ' || s[i] == '>' || s[i] == '<' || s[i] == '|'
-				|| s[i] == '(' || s[i] == ')'))
+				|| s[i] == ' ' || s[i] == '>' || s[i] == '<' || s[i] == '|'))
 			break ;
 		else
 		{
@@ -180,16 +177,14 @@ char	**ft_tokenization(char const *s)
 		return (NULL);
 	while (i < ft_word_counter(s))
 	{
-		if (!ft_strncmp(&s[j], "<<", 2) || !ft_strncmp(&s[j], ">>", 2)
-			|| !ft_strncmp(&s[j], "||", 2) || !ft_strncmp(&s[j], "&&", 2))
+		if (!ft_strncmp(&s[j], "<<", 2) || !ft_strncmp(&s[j], ">>", 2))
 		{
 			str[i] = ft_substr(s, j, 2);
 			if (!str[i])
 				return (ft_free(str, i));
 			j = j + 2;
 		}
-		else if (s[j] == '>' || s[j] == '<' || s[j] == '|' || s[j] == '('
-			|| s[j] == ')')
+		else if (s[j] == '>' || s[j] == '<' || s[j] == '|')
 		{
 			str[i] = ft_substr(s, j, 1);
 			if (!str[i])
@@ -208,6 +203,141 @@ char	**ft_tokenization(char const *s)
 			if (!str[i])
 				return (ft_free(str, i));
 			j = j + ft_wordlen(&s[j]);
+		}
+		i++;
+	}
+	str[i] = NULL;
+	return (str);
+}
+// with ft_split.c
+
+static int	ft_word_counter_split(char const *s)
+{
+	int	i;
+	int	count;
+
+	i = 0;
+	count = 0;
+	if (s[i] == '\0')
+		return (0);
+	while (s[i] != '\0')
+	{
+		count++;
+		while (s[i])
+		{
+			if (s[i] == '\'')
+			{
+				count++;
+				i++;
+				while (s[i] && s[i] != '\'')
+					i++;
+				if (s[i] == '\'')
+				{
+					count++;
+					i++;
+				}
+			}
+			else if (s[i] == '\"')
+			{
+				count++;
+				i++;
+				while (s[i] && s[i] != '\"')
+					i++;
+				if (s[i] == '\"')
+				{
+					count++;
+					i++;
+				}
+			}
+			else
+				i++;
+		}
+	}
+	return (count);
+}
+
+static int	ft_wordlen_split(char const *s, int flag)
+{
+	int	i;
+	int	len;
+
+	i = 0;
+	len = 0;
+	while (s[i] != '\0')
+	{
+		if (flag == 0 && s[i] == '\'')
+			break ;
+		else if (flag == 0 && s[i] == '\"')
+			break ;
+		else if (flag == 1 && s[i] == '\'')
+		{
+			len++;
+			i++;
+			while (s[i] && s[i] != '\'')
+			{
+				len++;
+				i++;
+			}
+			if (s[i] && s[i] == '\'')
+			{
+				len++;
+				i++;
+				break ;
+			}
+		}
+		else if (flag == 1 && s[i] == '\"')
+		{
+			len++;
+			i++;
+			while (s[i] && s[i] != '\"')
+			{
+				len++;
+				i++;
+			}
+			if (s[i] && s[i] == '\"')
+			{
+				len++;
+				i++;
+				break ;
+			}
+		}
+		else
+		{
+			len++;
+			i++;
+		}
+	}
+	return (len);
+}
+
+char	**ft_split(char const *s)
+{
+	char	**str;
+	int		i;
+	int		j;
+
+	i = 0;
+	j = 0;
+	if (!s)
+		return (NULL);
+	str = (char **)ft_calloc((ft_word_counter_split(s) + 1), sizeof(char *));
+	if (!str)
+		return (NULL);
+	while (i < ft_word_counter_split(s))
+	{
+		if (s[j] && s[j] != '\'' && s[j] != '\"')
+		{
+			str[i] = ft_substr(s, j, ft_wordlen_split(&s[j], 0));
+			if (!str[i])
+				return (ft_free(str, i));
+			j = j + ft_wordlen_split(&s[j], 0);
+		}
+		else if (s[j] && (s[j] == '\"' || s[j] == '\''))
+		{
+			str[i] = ft_substr(s, j, ft_wordlen_split(&s[j], 1));
+			if (!str[i])
+				return (ft_free(str, i));
+			j = j + ft_wordlen_split(&s[j], 1);
 		}
 		i++;
 	}

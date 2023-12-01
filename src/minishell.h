@@ -7,13 +7,9 @@ typedef enum e_token_type {
 	COMMAND,
 	HEREDOC,
 	APPEND,
-	OR,
-	AND,
 	PIPE,
 	INPUT_REDIRECT,
-	OUTPUT_REDIRECT,
-	LPHARANTHESIS,
-	RPHARANTHESIS
+	OUTPUT_REDIRECT
 }	t_token_type;
 
 typedef struct s_token {
@@ -28,5 +24,7 @@ void	ft_putstr_fd(char *s, int fd);
 size_t	ft_strlcpy(char *dst, const char *src, size_t dstsize);
 char	*ft_strdup(const char *s1);
 size_t	ft_strlen(const char *s);
+
+char	**ft_split(char const *s);
 
 #endif
