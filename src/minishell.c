@@ -145,6 +145,54 @@ int	ft_token_validation(t_token **token_struct_list)
 	return (0);
 }
 
+int	ft_isdigit(int c)
+{
+	return (c >= '0' && c <= '9');
+}
+
+int	ft_isalpha(int c)
+{
+	return ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'));
+}
+int	ft_isalnum(int c)
+{
+	return (ft_isalpha(c) || ft_isdigit(c));
+}
+
+char	*ft_dollar_sign_expansion(char *str)
+{
+	int		i;
+	int		j;
+	int		len;
+	char	*var;
+
+	len = 0;
+	j = 0;
+	i = 0;
+	while (str[i])
+	{
+		if (str[i] == '$' && str[i + 1])
+		{
+			i++;
+			j = i;
+			len = 0;
+			while (ft_isalnum(str[j]) || str[j] == '_')
+			{
+				j++;
+				len++;
+			}
+			var = ft_substr(&str[i], 0, len);
+			if (!var)
+				return (NULL);
+			i = j;
+			return (var);
+		}
+		else
+			i++;
+	}
+	return (str);
+}
+
 int	ft_quote_expansion(t_token **token_struct_list)
 {
 	t_quote *quoted_list;
@@ -258,7 +306,22 @@ int	ft_quote_expansion(t_token **token_struct_list)
 					}
 					free(temp_str);
 				}
-				// ft_$
+				temp_str = quoted_list[i].value[j];
+				quoted_list[i].value[j] = ft_dollar_sign_expansion(quoted_list[i].value[j]);
+				if (!quoted_list[i].value[j])
+					{
+						perror("Malloc failed");
+						ft_free_struct_list(token_struct_list);
+						i = 0;
+						while (quoted_list[i].value)
+						{
+							ft_free_list(quoted_list[i].value);
+							i++;
+						}
+						free(quoted_list);
+						return (2);
+					}
+					free(temp_str);
 			}
 			j++;
 		}
@@ -281,6 +344,8 @@ int	ft_quote_expansion(t_token **token_struct_list)
 		i++;
 	}
 	// ###############Silinecek##################
+
+	// en sonda token_struct_listin icindeki value degeri guncellenecek ve freelenecek
 	return (0);
 }
 
