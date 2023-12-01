@@ -33,7 +33,7 @@ size_t	ft_strlcpy(char *dst, const char *src, size_t dstsize)
 	return (i);
 }
 
-static char	*ft_substr(char const *s, unsigned int start, size_t len)
+char	*ft_substr(char const *s, unsigned int start, size_t len)
 {
 	char	*dst;
 	size_t	len_str;
@@ -116,7 +116,7 @@ static int	ft_word_counter(char const *s)
 	return (count);
 }
 
-static int	ft_wordlen(char const *s)
+/* static int	ft_wordlen(char const *s)
 {
 	int	i;
 	int	len;
@@ -149,6 +149,44 @@ static int	ft_wordlen(char const *s)
 		}
 	}
 	return (len);
+} */
+
+static int ft_wordlen(char const *s)
+{
+    int i;
+    int len;
+    int in_quote_d;
+    int in_quote_s;
+
+    i = 0;
+    in_quote_d = 0;
+    in_quote_s = 0;
+    len = 0;
+    while (s[i] != '\0')
+    {
+        if (s[i] == '\'' && in_quote_d == 0)
+		{
+            in_quote_s = !in_quote_s;
+			len++;
+        	i++;
+		}
+        else if (s[i] == '\"' && in_quote_s == 0)
+		{
+            in_quote_d = !in_quote_d;
+			len++;
+        	i++;
+		}
+        else if (in_quote_d == 0 && in_quote_s == 0
+                && (!ft_strncmp(&s[i], "<<", 2) || !ft_strncmp(&s[i], ">>", 2)
+                    || s[i] == ' ' || s[i] == '>' || s[i] == '<' || s[i] == '|'))
+            break;
+        else
+        {
+            len++;
+        	i++;
+		}
+    }
+    return (len);
 }
 
 static char	**ft_free(char **str, int i)

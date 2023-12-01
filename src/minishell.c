@@ -147,10 +147,11 @@ int	ft_token_validation(t_token **token_struct_list)
 
 int	ft_quote_expansion(t_token **token_struct_list)
 {
-	char ***quoted_list;
-	int i;
-	int	j;
-	int	count;
+	t_quote *quoted_list;
+	int 	i;
+	int		j;
+	int		count;
+	char	*temp_str;
 
 	count = 0;
 	i = 0;
@@ -160,41 +161,122 @@ int	ft_quote_expansion(t_token **token_struct_list)
 			count++;
 		i++;
 	}
-	quoted_list = (char **)ft_calloc(count + 1, sizeof(char ***));
+	quoted_list = (t_quote *)ft_calloc(count + 1, sizeof(t_quote));
 	if (!quoted_list)
 	{
 		perror("Malloc failed");
 		ft_free_struct_list(token_struct_list);
 		return (2);
 	}
-	quoted_list[count] = 0;
+	quoted_list[count].value = 0;
 	i = 0;
 	j = 0;
 	while (token_struct_list[i])
 	{
 		if (token_struct_list[i]->type == COMMAND)
 		{
-			quoted_list[j] = ft_split(token_struct_list[i]->value);
-			if (!quoted_list[j])
+			quoted_list[j].index = i;
+			quoted_list[j].value = ft_split(token_struct_list[i]->value);
+			if (!quoted_list[j].value)
 			{
 				perror("Malloc failed");
 				ft_free_struct_list(token_struct_list);
 				i = 0;
-				while (quoted_list[i])
+				while (quoted_list[i].value)
 				{
-					ft_free_list(quoted_list[i]);
+					ft_free_list(quoted_list[i].value);
 					i++;
 				}
 				free(quoted_list);
 				return (2);
 			}
-			//burada kacinci i indexi ise o indexteki token structa birlestirilmis deger
-			//girilmeli belki eski deger freelenip yeni adres atanmali mesela tken_struct_value[i] = 12'24"1' => 1224"1 olmali
-			// quoted listin[0] icindeki deger liste tmamlanmadan ilk hanggi strutctaysa ona tekrar atanmali 
 			j++;
 		}
 		i++;
 	}
+	// ###############Silinecek##################
+	printf("Before Cleaning\n");
+	i = 0;
+	j = 0;
+	while (quoted_list[i].value)
+	{
+		printf("index = %d, ", quoted_list[i].index);
+		j = 0;
+		while (quoted_list[i].value[j])
+		{
+			printf("value[%d] = %s, ", j, quoted_list[i].value[j]);
+			j++;
+		}
+		printf("\n");
+		i++;
+	}
+	// ###############Silinecek##################
+	i = 0;
+	j = 0;
+	while (quoted_list[i].value)
+	{
+		j = 0;
+		while (quoted_list[i].value[j])
+		{
+			if (quoted_list[i].value[j][0] == '\'')
+			{
+				temp_str = quoted_list[i].value[j];
+				quoted_list[i].value[j] = ft_strtrim(quoted_list[i].value[j], "\'");
+				if (!quoted_list[i].value[j])
+				{
+					perror("Malloc failed");
+					ft_free_struct_list(token_struct_list);
+					i = 0;
+					while (quoted_list[i].value)
+					{
+						ft_free_list(quoted_list[i].value);
+						i++;
+					}
+					free(quoted_list);
+					return (2);
+				}
+				free(temp_str);
+			}
+			else if (quoted_list[i].value[j][0] == '\"')
+			{
+				temp_str = quoted_list[i].value[j];
+				quoted_list[i].value[j] = ft_strtrim(quoted_list[i].value[j], "\"");
+				if (!quoted_list[i].value[j])
+				{
+					perror("Malloc failed");
+					ft_free_struct_list(token_struct_list);
+					i = 0;
+					while (quoted_list[i].value)
+					{
+						ft_free_list(quoted_list[i].value);
+						i++;
+					}
+					free(quoted_list);
+					return (2);
+				}
+				free(temp_str);
+			}
+			j++;
+		}
+		i++;
+	}
+	// ###############Silinecek##################
+	printf("After Cleaning\n");
+	i = 0;
+	j = 0;
+	while (quoted_list[i].value)
+	{
+		printf("index = %d, ", quoted_list[i].index);
+		j = 0;
+		while (quoted_list[i].value[j])
+		{
+			printf("value[%d] = %s, ", j, quoted_list[i].value[j]);
+			j++;
+		}
+		printf("\n");
+		i++;
+	}
+	// ###############Silinecek##################
 	return (0);
 }
 

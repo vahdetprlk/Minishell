@@ -9,7 +9,8 @@ SRC =	src/minishell.c \
 		src/ft_calloc.c \
 		src/ft_strncmp.c \
 		src/ft_putstr_fd.c \
-		src/ft_strdup.c
+		src/ft_strdup.c	\
+		src/ft_strtrim.c
 
 
 
