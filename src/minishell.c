@@ -237,24 +237,28 @@ int	ft_quote_expansion(t_token **token_struct_list)
 				}
 				free(temp_str);
 			}
-			else if (quoted_list[i].value[j][0] == '\"')
+			else
 			{
-				temp_str = quoted_list[i].value[j];
-				quoted_list[i].value[j] = ft_strtrim(quoted_list[i].value[j], "\"");
-				if (!quoted_list[i].value[j])
+				if (quoted_list[i].value[j][0] == '\"')
 				{
-					perror("Malloc failed");
-					ft_free_struct_list(token_struct_list);
-					i = 0;
-					while (quoted_list[i].value)
+					temp_str = quoted_list[i].value[j];
+					quoted_list[i].value[j] = ft_strtrim(quoted_list[i].value[j], "\"");
+					if (!quoted_list[i].value[j])
 					{
-						ft_free_list(quoted_list[i].value);
-						i++;
+						perror("Malloc failed");
+						ft_free_struct_list(token_struct_list);
+						i = 0;
+						while (quoted_list[i].value)
+						{
+							ft_free_list(quoted_list[i].value);
+							i++;
+						}
+						free(quoted_list);
+						return (2);
 					}
-					free(quoted_list);
-					return (2);
+					free(temp_str);
 				}
-				free(temp_str);
+				// ft_$
 			}
 			j++;
 		}
