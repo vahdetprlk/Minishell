@@ -17,6 +17,13 @@ typedef struct s_token {
 	t_token_type	type;
 }	t_token;
 
+typedef struct s_env
+{
+	char			*var_name;
+	char			*var_value;
+	struct s_env	*next;
+}				t_env;
+
 typedef struct s_quote {
 	char	**value;
 	int		index;
@@ -33,5 +40,8 @@ size_t	ft_strlen(const char *s);
 char	**ft_split(char const *s);
 char	*ft_strtrim(char const *s1, char const *set);
 char	*ft_substr(char const *s, unsigned int start, size_t len);
+char	*ft_strjoin(char const *s1, char const *s2);
+char	*ft_strchr(const char *s, int c);
+int		ft_strcmp(const char *s1, const char *s2);
 
 #endif

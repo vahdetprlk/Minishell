@@ -116,41 +116,6 @@ static int	ft_word_counter(char const *s)
 	return (count);
 }
 
-/* static int	ft_wordlen(char const *s)
-{
-	int	i;
-	int	len;
-	int	in_quote_d;
-	int	in_quote_s;
-
-	i = 0;
-	in_quote_d = 0;
-	in_quote_s = 0;
-	len = 0;
-	while (s[i] != '\0')
-	{
-		if (s[i] == '\'' || s[i] == '\"')
-		{
-			if (s[i] == '\'')
-				in_quote_s = !in_quote_s;
-			else
-				in_quote_d = !in_quote_d;
-			len++;
-			i++;
-		}
-		else if (in_quote_d == 0 && in_quote_s == 0
-			&& (!ft_strncmp(&s[i], "<<", 2) || !ft_strncmp(&s[i], ">>", 2)
-				|| s[i] == ' ' || s[i] == '>' || s[i] == '<' || s[i] == '|'))
-			break ;
-		else
-		{
-			len++;
-			i++;
-		}
-	}
-	return (len);
-} */
-
 static int ft_wordlen(char const *s)
 {
     int i;

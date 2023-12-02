@@ -159,16 +159,36 @@ int	ft_isalnum(int c)
 	return (ft_isalpha(c) || ft_isdigit(c));
 }
 
-char	*ft_dollar_sign_expansion(char *str)
+char	*ft_env_match(char *str, t_env *env_head)
+{
+	t_env	*temp;
+
+	temp = env_head;
+	while (temp)
+	{
+		if (ft_strcmp(str, temp->var_name) == 0)
+			return (temp->var_value);
+		temp = temp->next;
+	}
+	return (NULL);
+}
+
+char	*ft_dollar_sign_expansion(char *str, t_env *env_head)
 {
 	int		i;
 	int		j;
 	int		len;
-	char	*var;
+	char	*temp;
+	char	*temp_free;
+	char	*new_str;
+	char	*env_value;
 
 	len = 0;
 	j = 0;
 	i = 0;
+	new_str = ft_strdup("");
+	if (!new_str)
+		return (NULL);
 	while (str[i])
 	{
 		if (str[i] == '$' && str[i + 1])
@@ -181,19 +201,37 @@ char	*ft_dollar_sign_expansion(char *str)
 				j++;
 				len++;
 			}
-			var = ft_substr(&str[i], 0, len);
-			if (!var)
+			temp = ft_substr(&str[i], 0, len);
+			if (!temp)
 				return (NULL);
 			i = j;
-			return (var);
+			temp_free = new_str;
+			env_value = ft_env_match(temp, env_head);
+			if (!env_value)
+				env_value = "";
+			new_str = ft_strjoin(new_str, env_value);
+			free(temp);
+			free(temp_free);
 		}
 		else
-			i++;
+		{
+			j = i;
+			while (str[j] && str[j] != '$')
+				j++;
+			temp = ft_substr(&str[i], 0, j);
+			if (!temp)
+				return (NULL);
+			i = j;
+			temp_free = new_str;
+			new_str = ft_strjoin(new_str, temp);
+			free(temp);
+			free(temp_free);
+		}
 	}
-	return (str);
+	return (new_str);
 }
 
-int	ft_quote_expansion(t_token **token_struct_list)
+int	ft_quote_expansion(t_token **token_struct_list, t_env *env_head)
 {
 	t_quote *quoted_list;
 	int 	i;
@@ -307,7 +345,7 @@ int	ft_quote_expansion(t_token **token_struct_list)
 					free(temp_str);
 				}
 				temp_str = quoted_list[i].value[j];
-				quoted_list[i].value[j] = ft_dollar_sign_expansion(quoted_list[i].value[j]);
+				quoted_list[i].value[j] = ft_dollar_sign_expansion(quoted_list[i].value[j], env_head);
 				if (!quoted_list[i].value[j])
 					{
 						perror("Malloc failed");
@@ -349,7 +387,7 @@ int	ft_quote_expansion(t_token **token_struct_list)
 	return (0);
 }
 
-int	ft_prompt_hook(char *prompt)
+int	ft_prompt_hook(char *prompt, t_env *env_head)
 {
 	t_token	**token_struct_list;
 	char	**token_list;
@@ -379,15 +417,98 @@ int	ft_prompt_hook(char *prompt)
 		ft_free_struct_list(token_struct_list);
 		return (2);
 	}
-	ft_quote_expansion(token_struct_list);
+	ft_quote_expansion(token_struct_list, env_head);
 	ft_free_struct_list(token_struct_list);
 	return (0);
 }
 
-int	main(void)
+void	ft_env_lstadd_back(t_env **env, t_env *new)
 {
+	t_env	*temp;
+
+	if (!*env)
+	{
+		*env = new;
+		return ;
+	}
+	temp = *env;
+	while (temp->next)
+		temp = temp->next;
+	temp->next = new;
+}
+
+void	ft_env_lstadd_front(t_env **env, t_env *new)
+{
+	if (!*env)
+	{
+		*env = new;
+		return ;
+	}
+	new->next = *env;
+	*env = new;
+}
+
+void	ft_env_lstclear(t_env **env)
+{
+	t_env	*temp;
+
+	if (!*env)
+		return ;
+	while (*env)
+	{
+		temp = *env;
+		*env = (*env)->next;
+		free(temp->var_name);
+		free(temp->var_value);
+		free(temp);
+	}
+}
+
+int	main(int argc, char *argv[], char *envp[])
+{
+	(void)argc;
+	(void)argv;
 	int		status;
 	char	*prompt;
+	t_env	*env;
+	t_env	*env_head;
+
+	int	i;
+
+	i = 0;
+	while (envp[i])
+	{
+		env = (t_env *)ft_calloc(1 ,sizeof(t_env));
+		if (!env)
+		{
+			perror("Malloc failed");
+			ft_env_lstclear(&env_head);
+			return (1);
+		}
+		env->var_name = ft_substr(envp[i], 0, ft_strchr(envp[i], '=') - envp[i]);
+		if (!env->var_name)
+		{
+			perror("Malloc failed");
+			ft_env_lstclear(&env_head);
+			free(env);
+			return (1);
+		}
+		env->var_value = ft_substr(envp[i], ft_strchr(envp[i], '=') - envp[i] + 1, ft_strlen(envp[i]));
+		if (!env->var_value)
+		{
+			perror("Malloc failed");
+			ft_env_lstclear(&env_head);
+			free(env->var_name);
+			free(env);
+			return (1);
+		}
+		env->next = NULL;
+		if (!i)
+			env_head = env;
+		else
+			ft_env_lstadd_back(&env_head, env);
+		i++;
+	}
 
 	status = 0;
 	while (1)
@@ -396,7 +517,7 @@ int	main(void)
 		if (!prompt)
 			break ;
 		add_history(prompt);
-		status = ft_prompt_hook(prompt);
+		status = ft_prompt_hook(prompt, env_head);
 		printf ("%d\n", status);
 	}
 	return (status);
