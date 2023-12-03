@@ -65,11 +65,11 @@ int	ft_token_classification(char **token_list, t_token **token_struct_list)
 		if (!new_token->value)
 		{
 			perror("Malloc failed");
+			free(new_token);
 			ft_free_list(token_list);
 			ft_free_struct_list(token_struct_list);
 			return (1);
 		}
-
 		if (ft_strncmp(token_list[i], "<<", 2) == 0)
 			new_token->type = HEREDOC;
 		else if (ft_strncmp(token_list[i], ">>", 2) == 0)
@@ -191,8 +191,10 @@ char	*ft_dollar_sign_expansion(char *str, t_env *env_head)
 		return (NULL);
 	while (str[i])
 	{
-		if (str[i] == '$' && str[i + 1])
+		if (str[i] == '$')
 		{
+			if (!str[i + 1])
+				return (new_str);
 			i++;
 			j = i;
 			len = 0;
@@ -203,13 +205,23 @@ char	*ft_dollar_sign_expansion(char *str, t_env *env_head)
 			}
 			temp = ft_substr(&str[i], 0, len);
 			if (!temp)
+			{
+				free(new_str);
 				return (NULL);
+			}
 			i = j;
 			temp_free = new_str;
 			env_value = ft_env_match(temp, env_head);
 			if (!env_value)
 				env_value = "";
+			temp_free = new_str;
 			new_str = ft_strjoin(new_str, env_value);
+			if (!new_str)
+			{
+				free(temp);
+				free(temp_free);
+				return (NULL);
+			}
 			free(temp);
 			free(temp_free);
 		}
@@ -220,17 +232,26 @@ char	*ft_dollar_sign_expansion(char *str, t_env *env_head)
 				j++;
 			temp = ft_substr(&str[i], 0, j);
 			if (!temp)
+			{
+				free(new_str);
 				return (NULL);
+			}
 			i = j;
 			temp_free = new_str;
 			new_str = ft_strjoin(new_str, temp);
+			if (!new_str)
+			{
+				free(temp);
+				free(temp_free);
+				return (NULL);
+			}
 			free(temp);
 			free(temp_free);
 		}
 	}
 	return (new_str);
 }
-
+//env_head freelemeyi unutma fonksiyonlari boldukten sonra hangi fonksiyonlarda freelemek gerektigini bul
 int	ft_quote_expansion(t_token **token_struct_list, t_env *env_head)
 {
 	t_quote *quoted_list;
@@ -297,6 +318,7 @@ int	ft_quote_expansion(t_token **token_struct_list, t_env *env_head)
 		i++;
 	}
 	// ###############Silinecek##################
+
 	i = 0;
 	j = 0;
 	while (quoted_list[i].value)
@@ -306,6 +328,19 @@ int	ft_quote_expansion(t_token **token_struct_list, t_env *env_head)
 		{
 			if (quoted_list[i].value[j][0] == '\'')
 			{
+				if (quoted_list[i].value[j][ft_strlen(quoted_list[i].value[j]) - 1] != '\'')
+				{
+					ft_putstr_fd("Error: unclosed quote\n", STDERR_FILENO);
+					ft_free_struct_list(token_struct_list);
+					i = 0;
+					while (quoted_list[i].value)
+					{
+						ft_free_list(quoted_list[i].value);
+						i++;
+					}
+					free(quoted_list);
+					return (2);
+				}
 				temp_str = quoted_list[i].value[j];
 				quoted_list[i].value[j] = ft_strtrim(quoted_list[i].value[j], "\'");
 				if (!quoted_list[i].value[j])
@@ -327,6 +362,19 @@ int	ft_quote_expansion(t_token **token_struct_list, t_env *env_head)
 			{
 				if (quoted_list[i].value[j][0] == '\"')
 				{
+					if (quoted_list[i].value[j][ft_strlen(quoted_list[i].value[j]) - 1] != '\"')
+					{
+						ft_putstr_fd("Error: unclosed quote\n", STDERR_FILENO);
+						ft_free_struct_list(token_struct_list);
+						i = 0;
+						while (quoted_list[i].value)
+						{
+							ft_free_list(quoted_list[i].value);
+							i++;
+						}
+						free(quoted_list);
+						return (2);
+					}
 					temp_str = quoted_list[i].value[j];
 					quoted_list[i].value[j] = ft_strtrim(quoted_list[i].value[j], "\"");
 					if (!quoted_list[i].value[j])
@@ -382,8 +430,75 @@ int	ft_quote_expansion(t_token **token_struct_list, t_env *env_head)
 		i++;
 	}
 	// ###############Silinecek##################
-
-	// en sonda token_struct_listin icindeki value degeri guncellenecek ve freelenecek
+	i = 0;
+	j = 0;
+	while (quoted_list[i].value)
+	{
+		j = 0;
+		while (quoted_list[i].value[j])
+		{
+			if (j == 0)
+			{
+				temp_str = token_struct_list[quoted_list[i].index]->value;
+				token_struct_list[quoted_list[i].index]->value = ft_strdup(quoted_list[i].value[j]);
+				if (!token_struct_list[quoted_list[i].index]->value)
+				{
+					perror("Malloc failed");
+					free(temp_str);
+					ft_free_struct_list(token_struct_list);
+					i = 0;
+					while (quoted_list[i].value)
+					{
+						ft_free_list(quoted_list[i].value);
+						i++;
+					}
+					free(quoted_list);
+					return (2);
+				}
+				free(temp_str);
+			}
+			else
+			{
+				temp_str = token_struct_list[quoted_list[i].index]->value;
+				token_struct_list[quoted_list[i].index]->value = ft_strjoin(token_struct_list[quoted_list[i].index]->value, quoted_list[i].value[j]);
+				if (!token_struct_list[quoted_list[i].index]->value)
+				{
+					perror("Malloc failed");
+					free(temp_str);
+					ft_free_struct_list(token_struct_list);
+					i = 0;
+					while (quoted_list[i].value)
+					{
+						ft_free_list(quoted_list[i].value);
+						i++;
+					}
+					free(quoted_list);
+					return (2);
+				}
+				free(temp_str);
+			}
+			j++;
+		}
+		i++;
+	}
+	i = 0;
+	while (quoted_list[i].value)
+	{
+		ft_free_list(quoted_list[i].value);
+		i++;
+	}
+	free(quoted_list);
+		// ###############Silinecek##################
+	printf("After composing\n");
+	i = 0;
+	j = 0;
+	while (token_struct_list[i])
+	{
+		printf("type = %d, ", token_struct_list[i]->type);
+		printf("value = %s\n", token_struct_list[i]->value);
+		i++;
+	}
+	// ###############Silinecek##################
 	return (0);
 }
 
@@ -417,7 +532,8 @@ int	ft_prompt_hook(char *prompt, t_env *env_head)
 		ft_free_struct_list(token_struct_list);
 		return (2);
 	}
-	ft_quote_expansion(token_struct_list, env_head);
+	if (ft_quote_expansion(token_struct_list, env_head))
+		return (2);
 	ft_free_struct_list(token_struct_list);
 	return (0);
 }
@@ -520,5 +636,6 @@ int	main(int argc, char *argv[], char *envp[])
 		status = ft_prompt_hook(prompt, env_head);
 		printf ("%d\n", status);
 	}
+	ft_env_lstclear(&env_head);
 	return (status);
 }
