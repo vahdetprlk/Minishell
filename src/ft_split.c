@@ -212,7 +212,6 @@ char	**ft_tokenization(char const *s)
 	str[i] = NULL;
 	return (str);
 }
-// with ft_split.c
 
 static int	ft_word_counter_split(char const *s)
 {

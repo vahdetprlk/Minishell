@@ -12,7 +12,8 @@ SRC =	src/minishell.c \
 		src/ft_strdup.c	\
 		src/ft_strtrim.c \
 		src/ft_strjoin.c \
-		src/ft_strcmp.c 
+		src/ft_strcmp.c \
+		src/ft_itoa.c
 
 
 

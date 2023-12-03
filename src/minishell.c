@@ -102,7 +102,7 @@ int	ft_token_validation(t_token **token_struct_list)
 				ft_putstr_fd("minishell: syntax error near unexpected token `", STDERR_FILENO);
 				ft_putstr_fd(token_struct_list[i]->value, STDERR_FILENO);
 				ft_putstr_fd("'\n", STDERR_FILENO);
-				return (2);
+				return (1);
 			}
 			else if (token_struct_list[i] && token_struct_list[i + 1])
 			{
@@ -111,7 +111,7 @@ int	ft_token_validation(t_token **token_struct_list)
 					ft_putstr_fd("minishell: syntax error near unexpected token `", STDERR_FILENO);
 					ft_putstr_fd(token_struct_list[i + 1]->value, STDERR_FILENO);
 					ft_putstr_fd("'\n", STDERR_FILENO);
-					return (2);
+					return (1);
 				}
 				else
 				{
@@ -122,7 +122,7 @@ int	ft_token_validation(t_token **token_struct_list)
 			else if (!token_struct_list[i + 1])
 			{
 				ft_putstr_fd("minishell: syntax error near unexpected token `newline'\n", STDERR_FILENO);
-				return (2);
+				return (1);
 			}
 		}
 		if (token_struct_list[i]->type != COMMAND)
@@ -130,14 +130,14 @@ int	ft_token_validation(t_token **token_struct_list)
 			if (!token_struct_list[i + 1])
 			{
 				ft_putstr_fd("minishell: syntax error near unexpected token `newline'\n", STDERR_FILENO);
-				return (2);
+				return (1);
 			}
 			if (token_struct_list[i + 1]->type != COMMAND)
 			{
 				ft_putstr_fd("minishell: syntax error near unexpected token `", STDERR_FILENO);
 				ft_putstr_fd(token_struct_list[i + 1]->value, STDERR_FILENO);
 				ft_putstr_fd("'\n", STDERR_FILENO);
-				return (2);
+				return (1);
 			}
 		}
 		i++;
@@ -173,7 +173,7 @@ char	*ft_env_match(char *str, t_env *env_head)
 	return (NULL);
 }
 
-char	*ft_dollar_sign_expansion(char *str, t_env *env_head)
+char	*ft_dollar_sign_expansion(char *str, t_env *env_head, int *exit_status)
 {
 	int		i;
 	int		j;
@@ -191,7 +191,28 @@ char	*ft_dollar_sign_expansion(char *str, t_env *env_head)
 		return (NULL);
 	while (str[i])
 	{
-		if (str[i] == '$')
+		if (str[i] == '$' && str[i + 1] == '?')
+		{
+			i += 2;
+			len = 2;
+			env_value = ft_itoa(*exit_status);
+			if (!env_value)
+			{
+				free(new_str);
+				return (NULL);
+			}
+			temp_free = new_str;
+			new_str = ft_strjoin(new_str, env_value);
+			if (!new_str)
+			{
+				free(env_value);
+				free(temp_free);
+				return (NULL);
+			}
+			free(env_value);
+			free(temp_free);
+		}
+		else if (str[i] == '$')
 		{
 			if (!str[i + 1])
 				return (new_str);
@@ -210,7 +231,6 @@ char	*ft_dollar_sign_expansion(char *str, t_env *env_head)
 				return (NULL);
 			}
 			i = j;
-			temp_free = new_str;
 			env_value = ft_env_match(temp, env_head);
 			if (!env_value)
 				env_value = "";
@@ -230,7 +250,7 @@ char	*ft_dollar_sign_expansion(char *str, t_env *env_head)
 			j = i;
 			while (str[j] && str[j] != '$')
 				j++;
-			temp = ft_substr(&str[i], 0, j);
+			temp = ft_substr(&str[i], 0, j - i);
 			if (!temp)
 			{
 				free(new_str);
@@ -252,7 +272,7 @@ char	*ft_dollar_sign_expansion(char *str, t_env *env_head)
 	return (new_str);
 }
 //env_head freelemeyi unutma fonksiyonlari boldukten sonra hangi fonksiyonlarda freelemek gerektigini bul
-int	ft_quote_expansion(t_token **token_struct_list, t_env *env_head)
+int	ft_quote_expansion(t_token **token_struct_list, t_env *env_head, int *exit_status)
 {
 	t_quote *quoted_list;
 	int 	i;
@@ -273,7 +293,7 @@ int	ft_quote_expansion(t_token **token_struct_list, t_env *env_head)
 	{
 		perror("Malloc failed");
 		ft_free_struct_list(token_struct_list);
-		return (2);
+		return (1);
 	}
 	quoted_list[count].value = 0;
 	i = 0;
@@ -295,29 +315,12 @@ int	ft_quote_expansion(t_token **token_struct_list, t_env *env_head)
 					i++;
 				}
 				free(quoted_list);
-				return (2);
+				return (1);
 			}
 			j++;
 		}
 		i++;
 	}
-	// ###############Silinecek##################
-	printf("Before Cleaning\n");
-	i = 0;
-	j = 0;
-	while (quoted_list[i].value)
-	{
-		printf("index = %d, ", quoted_list[i].index);
-		j = 0;
-		while (quoted_list[i].value[j])
-		{
-			printf("value[%d] = %s, ", j, quoted_list[i].value[j]);
-			j++;
-		}
-		printf("\n");
-		i++;
-	}
-	// ###############Silinecek##################
 
 	i = 0;
 	j = 0;
@@ -339,7 +342,7 @@ int	ft_quote_expansion(t_token **token_struct_list, t_env *env_head)
 						i++;
 					}
 					free(quoted_list);
-					return (2);
+					return (1);
 				}
 				temp_str = quoted_list[i].value[j];
 				quoted_list[i].value[j] = ft_strtrim(quoted_list[i].value[j], "\'");
@@ -354,7 +357,7 @@ int	ft_quote_expansion(t_token **token_struct_list, t_env *env_head)
 						i++;
 					}
 					free(quoted_list);
-					return (2);
+					return (1);
 				}
 				free(temp_str);
 			}
@@ -373,7 +376,7 @@ int	ft_quote_expansion(t_token **token_struct_list, t_env *env_head)
 							i++;
 						}
 						free(quoted_list);
-						return (2);
+						return (1);
 					}
 					temp_str = quoted_list[i].value[j];
 					quoted_list[i].value[j] = ft_strtrim(quoted_list[i].value[j], "\"");
@@ -388,12 +391,12 @@ int	ft_quote_expansion(t_token **token_struct_list, t_env *env_head)
 							i++;
 						}
 						free(quoted_list);
-						return (2);
+						return (1);
 					}
 					free(temp_str);
 				}
 				temp_str = quoted_list[i].value[j];
-				quoted_list[i].value[j] = ft_dollar_sign_expansion(quoted_list[i].value[j], env_head);
+				quoted_list[i].value[j] = ft_dollar_sign_expansion(quoted_list[i].value[j], env_head, exit_status);
 				if (!quoted_list[i].value[j])
 					{
 						perror("Malloc failed");
@@ -405,7 +408,7 @@ int	ft_quote_expansion(t_token **token_struct_list, t_env *env_head)
 							i++;
 						}
 						free(quoted_list);
-						return (2);
+						return (1);
 					}
 					free(temp_str);
 			}
@@ -413,23 +416,7 @@ int	ft_quote_expansion(t_token **token_struct_list, t_env *env_head)
 		}
 		i++;
 	}
-	// ###############Silinecek##################
-	printf("After Cleaning\n");
-	i = 0;
-	j = 0;
-	while (quoted_list[i].value)
-	{
-		printf("index = %d, ", quoted_list[i].index);
-		j = 0;
-		while (quoted_list[i].value[j])
-		{
-			printf("value[%d] = %s, ", j, quoted_list[i].value[j]);
-			j++;
-		}
-		printf("\n");
-		i++;
-	}
-	// ###############Silinecek##################
+
 	i = 0;
 	j = 0;
 	while (quoted_list[i].value)
@@ -453,7 +440,7 @@ int	ft_quote_expansion(t_token **token_struct_list, t_env *env_head)
 						i++;
 					}
 					free(quoted_list);
-					return (2);
+					return (1);
 				}
 				free(temp_str);
 			}
@@ -473,7 +460,7 @@ int	ft_quote_expansion(t_token **token_struct_list, t_env *env_head)
 						i++;
 					}
 					free(quoted_list);
-					return (2);
+					return (1);
 				}
 				free(temp_str);
 			}
@@ -488,21 +475,11 @@ int	ft_quote_expansion(t_token **token_struct_list, t_env *env_head)
 		i++;
 	}
 	free(quoted_list);
-		// ###############Silinecek##################
-	printf("After composing\n");
-	i = 0;
-	j = 0;
-	while (token_struct_list[i])
-	{
-		printf("type = %d, ", token_struct_list[i]->type);
-		printf("value = %s\n", token_struct_list[i]->value);
-		i++;
-	}
-	// ###############Silinecek##################
+
 	return (0);
 }
 
-int	ft_prompt_hook(char *prompt, t_env *env_head)
+int	ft_prompt_hook(char *prompt, t_env *env_head, int *exit_status)
 {
 	t_token	**token_struct_list;
 	char	**token_list;
@@ -530,10 +507,18 @@ int	ft_prompt_hook(char *prompt, t_env *env_head)
 	if (ft_token_validation(token_struct_list))
 	{
 		ft_free_struct_list(token_struct_list);
-		return (2);
+		return (1);
 	}
-	if (ft_quote_expansion(token_struct_list, env_head))
-		return (2);
+	if (ft_quote_expansion(token_struct_list, env_head, exit_status))
+		return (1);
+	//test
+	int i = 0;
+	while (token_struct_list[i])
+	{
+		printf("kind= %d token_struct_list[%d]->value = %s\n", token_struct_list[i]->type, i, token_struct_list[i]->value);
+		i++;
+	}
+	//test
 	ft_free_struct_list(token_struct_list);
 	return (0);
 }
@@ -625,6 +610,14 @@ int	main(int argc, char *argv[], char *envp[])
 			ft_env_lstadd_back(&env_head, env);
 		i++;
 	}
+//##############silinece##############
+	while (env_head)
+	{
+		printf("%s=%s\n", env_head->var_name, env_head->var_value);
+		env_head = env_head->next;
+	}
+//##############silinece##############
+
 
 	status = 0;
 	while (1)
@@ -633,8 +626,7 @@ int	main(int argc, char *argv[], char *envp[])
 		if (!prompt)
 			break ;
 		add_history(prompt);
-		status = ft_prompt_hook(prompt, env_head);
-		printf ("%d\n", status);
+		ft_prompt_hook(prompt, env_head, &status);
 	}
 	ft_env_lstclear(&env_head);
 	return (status);
