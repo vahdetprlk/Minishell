@@ -329,7 +329,7 @@ int	ft_quote_expansion(t_token **token_struct_list, t_env *env_head, int *exit_s
 		j = 0;
 		while (quoted_list[i].value[j])
 		{
-			if (quoted_list[i].value[j][0] == '\'')
+			if (quoted_list[i].value[j][0] == '\'')//strlen 1 e esitse ve tirnak ise hata ver
 			{
 				if (quoted_list[i].value[j][ft_strlen(quoted_list[i].value[j]) - 1] != '\'')
 				{
@@ -611,10 +611,13 @@ int	main(int argc, char *argv[], char *envp[])
 		i++;
 	}
 //##############silinece##############
-	while (env_head)
-	{
-		printf("%s=%s\n", env_head->var_name, env_head->var_value);
-		env_head = env_head->next;
+	t_env *iter;
+	iter = env_head;
+	while (iter)
+	{//tek satirda argumani yaz
+		printf("%s=", iter->var_name);
+		printf("%s\n", iter->var_value);
+		iter = iter->next;
 	}
 //##############silinece##############
 
