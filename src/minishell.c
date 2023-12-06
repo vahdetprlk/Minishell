@@ -212,7 +212,7 @@ char	*ft_dollar_sign_expansion(char *str, t_env *env_head, int *exit_status)
 			free(env_value);
 			free(temp_free);
 		}
-		else if ((str[i] == '$' && str[i + 1]) && (str[i + 1] != '_' && !ft_isalpha(str[i + 1]))) // eger echo "$Vahdet" gibi bir sey girilirse sonsiz onguyu boz
+		else if ((str[i] == '$' && str[i + 1]) && (str[i + 1] != '_' && !ft_isalpha(str[i + 1]))) 
 		{
 			j = i + 2;
 			while (str[j] && str[j] != '$')
@@ -235,10 +235,20 @@ char	*ft_dollar_sign_expansion(char *str, t_env *env_head, int *exit_status)
 			free(temp);
 			free(temp_free);
 		}
-		else if ((str[i] == '$'))// str eger tek dolarsa siliniyor dolar tek basina oldugunda silinmemeli. bunu coz
+		else if (str[i] == '$')
 		{
 			if (!str[i + 1])
+			{
+				temp_free = new_str;
+				new_str = ft_strjoin(new_str, "$");
+				if (!new_str)
+				{
+					free(temp_free);
+					return (NULL);
+				}
+				free(temp_free);
 				return (new_str);
+			}
 			i++;
 			j = i;
 			len = 0;
