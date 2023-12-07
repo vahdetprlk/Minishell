@@ -212,9 +212,9 @@ char	*ft_dollar_sign_expansion(char *str, t_env *env_head, int *exit_status)
 			free(env_value);
 			free(temp_free);
 		}
-		else if ((str[i] == '$' && str[i + 1]) && (str[i + 1] != '_' && !ft_isalpha(str[i + 1]))) 
+		else if ((str[i] == '$' && str[i + 1]) && (str[i + 1] != '_' && !ft_isalnum(str[i + 1])))
 		{
-			j = i + 2;
+			j = i + 1;
 			while (str[j] && str[j] != '$')
 				j++;
 			temp = ft_substr(&str[i], 0, j - i);
@@ -304,6 +304,7 @@ char	*ft_dollar_sign_expansion(char *str, t_env *env_head, int *exit_status)
 	}
 	return (new_str);
 }
+
 //env_head freelemeyi unutma fonksiyonlari boldukten sonra hangi fonksiyonlarda freelemek gerektigini bul
 int	ft_quote_expansion(t_token **token_struct_list, t_env *env_head, int *exit_status)
 {
@@ -362,8 +363,21 @@ int	ft_quote_expansion(t_token **token_struct_list, t_env *env_head, int *exit_s
 		j = 0;
 		while (quoted_list[i].value[j])
 		{
-			if (quoted_list[i].value[j][0] == '\'')//strlen 1 e esitse ve tirnak ise hata ver
+			if (quoted_list[i].value[j][0] == '\'')
 			{
+				if (quoted_list[i].value[j][1] == '\0')
+				{
+					ft_putstr_fd("Error: unclosed quote\n", STDERR_FILENO);
+					ft_free_struct_list(token_struct_list);
+					i = 0;
+					while (quoted_list[i].value)
+					{
+						ft_free_list(quoted_list[i].value);
+						i++;
+					}
+					free(quoted_list);
+					return (1);
+				}
 				if (quoted_list[i].value[j][ft_strlen(quoted_list[i].value[j]) - 1] != '\'')
 				{
 					ft_putstr_fd("Error: unclosed quote\n", STDERR_FILENO);
@@ -396,6 +410,19 @@ int	ft_quote_expansion(t_token **token_struct_list, t_env *env_head, int *exit_s
 			}
 			else
 			{
+				if (quoted_list[i].value[j][0] == '\"' && quoted_list[i].value[j][1] == '\0')
+				{
+					ft_putstr_fd("Error: unclosed quote\n", STDERR_FILENO);
+					ft_free_struct_list(token_struct_list);
+					i = 0;
+					while (quoted_list[i].value)
+					{
+						ft_free_list(quoted_list[i].value);
+						i++;
+					}
+					free(quoted_list);
+					return (1);
+				}
 				if (quoted_list[i].value[j][0] == '\"')
 				{
 					if (quoted_list[i].value[j][ft_strlen(quoted_list[i].value[j]) - 1] != '\"')
@@ -644,14 +671,14 @@ int	main(int argc, char *argv[], char *envp[])
 		i++;
 	}
 //##############silinece##############
-	t_env *iter;
-	iter = env_head;
-	while (iter)
-	{//tek satirda argumani yaz
-		printf("%s=", iter->var_name);
-		printf("%s\n", iter->var_value);
-		iter = iter->next;
-	}
+	// t_env *iter;
+	// iter = env_head;
+	// while (iter)
+	// {//tek satirda argumani yaz
+	// 	printf("%s=", iter->var_name);
+	// 	printf("%s\n", iter->var_value);
+	// 	iter = iter->next;
+	// }
 //##############silinece##############
 
 

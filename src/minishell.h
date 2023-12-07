@@ -3,18 +3,18 @@
 
 # include <stddef.h>
 
-typedef enum e_token_type {
+enum e_token_type {
 	COMMAND,
 	HEREDOC,
 	APPEND,
 	PIPE,
 	INPUT_REDIRECT,
 	OUTPUT_REDIRECT
-}	t_token_type;
+};
 
 typedef struct s_token {
-	char			*value;
-	t_token_type	type;
+	char	*value;
+	int		type;
 }	t_token;
 
 typedef struct s_env
