@@ -6,7 +6,15 @@ CFLAGS = -Wall -Wextra -Werror -g
 
 SRC =	src/minishell.c \
 		src/ft_split.c \
-		src/ft_calloc.c
+		src/ft_calloc.c \
+		src/ft_strncmp.c \
+		src/ft_putstr_fd.c \
+		src/ft_strdup.c	\
+		src/ft_strtrim.c \
+		src/ft_strjoin.c \
+		src/ft_strcmp.c \
+		src/ft_itoa.c
+
 
 
 OBJ = $(SRC:.c=.o)

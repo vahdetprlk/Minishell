@@ -1,6 +1,8 @@
 #include "minishell.h"
+#include <stdlib.h>
 
-static size_t	ft_strlen(const char *s)
+
+size_t	ft_strlen(const char *s)
 {
 	size_t	i;
 
@@ -10,7 +12,11 @@ static size_t	ft_strlen(const char *s)
 	return (i);
 }
 
-static size_t	ft_strlcpy(char *dst, const char *src, size_t dstsize)
+int ft_isspace(int c)
+{
+    return (c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f' || c == '\v');
+}
+size_t	ft_strlcpy(char *dst, const char *src, size_t dstsize)
 {
 	size_t	i;
 	size_t	k;
@@ -30,7 +36,7 @@ static size_t	ft_strlcpy(char *dst, const char *src, size_t dstsize)
 	return (i);
 }
 
-static char	*ft_substr(char const *s, unsigned int start, size_t len)
+char	*ft_substr(char const *s, unsigned int start, size_t len)
 {
 	char	*dst;
 	size_t	len_str;
@@ -48,9 +54,9 @@ static char	*ft_substr(char const *s, unsigned int start, size_t len)
 		if ((len_str - start) < len)
 			len = len_str - start;
 		if (len_str >= len)
-			dst = (char *)ft_calloc(len + 1 ,sizeof(char));
+			dst = (char *)ft_calloc(len + 1, sizeof(char));
 		else
-			dst = (char *)ft_calloc(len_str + 1 ,sizeof(char));
+			dst = (char *)ft_calloc(len_str + 1, sizeof(char));
 		if (dst == NULL)
 			return (NULL);
 		ft_strlcpy(dst, s + start, len + 1);
@@ -58,47 +64,294 @@ static char	*ft_substr(char const *s, unsigned int start, size_t len)
 	return (dst);
 }
 
-static size_t	word_counter(char const *s, char c)
+static int	ft_iterator(char const *s, int i)
 {
-	size_t	word_counter;
-
-	word_counter = 0;
-	while (*s)
+	while (s[i] && !ft_isspace(s[i]) && s[i] != '>'
+		&& s[i] != '<' && s[i] != '|')
 	{
-		if (*s == c)
-			s++;
-		else
+		if (s[i] == '\'')
 		{
-			word_counter++;
-			while (*s && *s != c)
-				s++;
+			i++;
+			while (s[i] && s[i] != '\'')
+				i++;
+			if (s[i] == '\'')
+				i++;
 		}
+		else if (s[i] == '\"')
+		{
+			i++;
+			while (s[i] && s[i] != '\"')
+				i++;
+			if (s[i] == '\"')
+				i++;
+		}
+		else
+			i++;
 	}
-	return (word_counter);
+	return (i);
 }
 
-char	**ft_split(char const *s, char c)
+static int	ft_token_counter(char const *s)
 {
-	char	**dst;
-	size_t	word_size;
-	size_t	letter_counter;
+	int	i;
+	int	count;
 
-	word_size = word_counter(s, c);
-	dst = (char **)ft_calloc((word_size + 1), sizeof(char *));
-	if (!dst)
-		return (NULL);
-	while (*s)
+	i = 0;
+	count = 0;
+	if (s[i] == '\0')
+		return (0);
+	while (s[i] != '\0')
 	{
-		if (*s == c)
-			s++;
+		if (!ft_strncmp(&s[i], "<<", 2) || !ft_strncmp(&s[i], ">>", 2))
+		{
+			count++;
+			i += 2;
+		}
+		else if (s[i] == '>' || s[i] == '<' || s[i] == '|')
+		{
+			count++;
+			i++;
+		}
+		else if (ft_isspace(s[i]))
+			while (s[i] && ft_isspace(s[i]))
+				i++;
 		else
 		{
-			letter_counter = 0;
-			while (*s && *s != c && ++letter_counter)
-				s++;
-			*dst++ = ft_substr(s - letter_counter, 0, letter_counter);
+			count++;
+			i = ft_iterator(s, i);
 		}
 	}
-	*dst = 0;
-	return (dst - word_size);
+	return (count);
+}
+
+
+static int ft_token_len(char const *s)
+{
+    int i;
+    int len;
+    int in_quote_d;
+    int in_quote_s;
+
+    i = 0;
+    in_quote_d = 0;
+    in_quote_s = 0;
+    len = 0;
+    while (s[i] != '\0')
+    {
+        if (s[i] == '\'' && in_quote_d == 0)
+		{
+            in_quote_s = !in_quote_s;
+			len++;
+        	i++;
+		}
+        else if (s[i] == '\"' && in_quote_s == 0)
+		{
+            in_quote_d = !in_quote_d;
+			len++;
+        	i++;
+		}
+        else if (in_quote_d == 0 && in_quote_s == 0
+                && (!ft_strncmp(&s[i], "<<", 2) || !ft_strncmp(&s[i], ">>", 2)
+                    || ft_isspace(s[i]) || s[i] == '>' || s[i] == '<' || s[i] == '|'))
+            break;
+        else
+        {
+            len++;
+        	i++;
+		}
+    }
+    return (len);
+}
+
+static char	**ft_free(char **str, int i)
+{
+	while (i >= 0)
+	{
+		free(str[i]);
+		i--;
+	}
+	free(str);
+	return (NULL);
+}
+
+char	**ft_tokenization(char const *s)
+{
+	char	**str;
+	int		i;
+	int		j;
+
+	i = 0;
+	j = 0;
+	if (!s)
+		return (NULL);
+	str = (char **)ft_calloc((ft_token_counter(s) + 1), sizeof(char *));
+	if (!str)
+		return (NULL);
+	while (i < ft_token_counter(s))
+	{
+		if (!ft_strncmp(&s[j], "<<", 2) || !ft_strncmp(&s[j], ">>", 2))
+		{
+			str[i] = ft_substr(s, j, 2);
+			if (!str[i])
+				return (ft_free(str, i));
+			j = j + 2;
+		}
+		else if (s[j] == '>' || s[j] == '<' || s[j] == '|')
+		{
+			str[i] = ft_substr(s, j, 1);
+			if (!str[i])
+				return (ft_free(str, i));
+			j++;
+		}
+		else if (ft_isspace(s[j]))
+		{
+			while (s[j] && ft_isspace(s[j]))
+				j++;
+			continue ;
+		}
+		else
+		{
+			str[i] = ft_substr(s, j, ft_token_len(&s[j]));
+			if (!str[i])
+				return (ft_free(str, i));
+			j = j + ft_token_len(&s[j]);
+		}
+		i++;
+	}
+	str[i] = NULL;
+	return (str);
+}
+
+static int	ft_word_counter_quotes(char const *s)
+{
+	int	i;
+	int	count;
+
+	i = 0;
+	count = 0;
+	if (s[i] == '\0')
+		return (0);
+	while (s[i] != '\0')
+	{
+		count++;
+		while (s[i])
+		{
+			if (s[i] == '\'')
+			{
+				count++;
+				i++;
+				while (s[i] && s[i] != '\'')
+					i++;
+				if (s[i] == '\'')
+				{
+					count++;
+					i++;
+				}
+			}
+			else if (s[i] == '\"')
+			{
+				count++;
+				i++;
+				while (s[i] && s[i] != '\"')
+					i++;
+				if (s[i] == '\"')
+				{
+					count++;
+					i++;
+				}
+			}
+			else
+				i++;
+		}
+	}
+	return (count);
+}
+
+static int	ft_wordlen_quotes(char const *s, int flag)
+{
+	int	i;
+	int	len;
+
+	i = 0;
+	len = 0;
+	while (s[i] != '\0')
+	{
+		if (flag == 0 && s[i] == '\'')
+			break ;
+		else if (flag == 0 && s[i] == '\"')
+			break ;
+		else if (flag == 1 && s[i] == '\'')
+		{
+			len++;
+			i++;
+			while (s[i] && s[i] != '\'')
+			{
+				len++;
+				i++;
+			}
+			if (s[i] && s[i] == '\'')
+			{
+				len++;
+				i++;
+				break ;
+			}
+		}
+		else if (flag == 1 && s[i] == '\"')
+		{
+			len++;
+			i++;
+			while (s[i] && s[i] != '\"')
+			{
+				len++;
+				i++;
+			}
+			if (s[i] && s[i] == '\"')
+			{
+				len++;
+				i++;
+				break ;
+			}
+		}
+		else
+		{
+			len++;
+			i++;
+		}
+	}
+	return (len);
+}
+
+char	**ft_split_by_quotes(char const *s)
+{
+	char	**str;
+	int		i;
+	int		j;
+
+	i = 0;
+	j = 0;
+	if (!s)
+		return (NULL);
+	str = (char **)ft_calloc((ft_word_counter_quotes(s) + 1), sizeof(char *));
+	if (!str)
+		return (NULL);
+	while (i < ft_word_counter_quotes(s))
+	{
+		if (s[j] && s[j] != '\'' && s[j] != '\"')
+		{
+			str[i] = ft_substr(s, j, ft_wordlen_quotes(&s[j], 0));
+			if (!str[i])
+				return (ft_free(str, i));
+			j = j + ft_wordlen_quotes(&s[j], 0);
+		}
+		else if (s[j] && (s[j] == '\"' || s[j] == '\''))
+		{
+			str[i] = ft_substr(s, j, ft_wordlen_quotes(&s[j], 1));
+			if (!str[i])
+				return (ft_free(str, i));
+			j = j + ft_wordlen_quotes(&s[j], 1);
+		}
+		i++;
+	}
+	str[i] = NULL;
+	return (str);
 }

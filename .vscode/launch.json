@@ -1,6 +1,7 @@
 {
   "version": "0.2.0",
   "configurations": [
+
     {
       "name": "(lldb) Başlat",
       "type": "cppdbg",
@@ -9,8 +10,8 @@
       "args": [],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
-      "environment": [],
-      "externalConsole": false,
+      "environmen3t": [],
+      "externalConsole": true,
       "preLaunchTask": "make minishell",
       "MIMode": "lldb"
     },
